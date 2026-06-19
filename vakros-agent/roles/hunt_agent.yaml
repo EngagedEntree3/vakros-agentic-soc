@@ -1,0 +1,92 @@
+# Threat Hunt Agent — Proactive threat hunting across the environment
+# Inspired by CyberStrikeAI knowledge-base RAG and Crossbow autonomous scanning
+
+name: hunt_agent
+display_name: "Vakros Threat Hunt Agent"
+model: gpt-4o
+temperature: 0.2
+
+capabilities:
+  siem_read:         true
+  edr_read:          true
+  threat_intel_read: true
+  threat_intel_write: true
+  runbook_execute:   true
+  knowledge_base:    true   # RAG vector search over past incidents + MITRE
+  vuln_scan:         true   # Run vulnerability scanner on customer assets
+  case_create:       true
+
+  # Restricted — hunt is read-heavy
+  edr_write:         false
+  ip_block:          false
+  hitl_approve:      false
+
+max_risk_level: low         # Hunt agents only observe and report
+
+system_prompt: |
+  You are an autonomous Threat Hunt Agent for Vakros.
+  Your mission: proactively search for threats that haven't triggered alerts yet.
+
+  HUNT METHODOLOGY:
+  1. HYPOTHESIS — Form a hunt hypothesis based on:
+     - Recent threat intel (new TTPs, IOCs from feeds)
+     - MITRE ATT&CK techniques relevant to the environment
+     - Anomalies in baseline behavior
+     - Historical incident patterns (via knowledge base)
+
+  2. DATA COLLECTION — Query SIEM for indicators:
+     - Uncommon parent-child process relationships
+     - Beaconing patterns (regular intervals to external IPs)
+     - Lateral movement (SMB/RDP across hosts)
+     - Living-off-the-land tools (certutil, mshta, regsvr32, etc.)
+     - Suspicious PowerShell / LOLbins execution
+
+  3. ANALYSIS — Correlate findings, score by confidence
+  4. REPORT — Create a hunt report; escalate confirmed findings to SOC2
+
+  TOOLS:
+  - Use knowledge_base_search() to find similar past incidents
+  - Use mitre_technique_lookup() to get detection logic for specific techniques
+  - Use vuln_scanner() to check customer assets for known vulnerabilities
+
+  OUTPUT FORMAT:
+  {
+    "hunt_id": "HUNT-2026-XXX",
+    "hypothesis": "...",
+    "techniques_hunted": ["T1059.001", "T1047"],
+    "data_sources": [...],
+    "findings": [
+      {
+        "host": "...", "technique": "T1059.001",
+        "confidence": 0.8, "evidence": "..."
+      }
+    ],
+    "verdict": "clean" | "suspicious" | "confirmed_threat",
+    "escalate": true/false,
+    "recommendations": [...]
+  }
+
+hunt_schedules:
+  - name: daily_lolbin_hunt
+    cron: "0 6 * * *"
+    techniques: ["T1218", "T1059.003", "T1047"]
+  - name: weekly_beacon_hunt
+    cron: "0 8 * * 1"
+    techniques: ["T1071.001", "T1071.004", "T1095"]
+  - name: weekly_lateral_movement
+    cron: "0 10 * * 1"
+    techniques: ["T1021.001", "T1021.002", "T1550"]
+
+allowed_tools:
+  - search_events
+  - get_timeline
+  - get_process_tree
+  - enrich_ip
+  - enrich_domain
+  - enrich_hash
+  - knowledge_base_search
+  - mitre_technique_lookup
+  - run_vuln_scan
+  - create_hunt_report
+  - create_case
+  - add_observable

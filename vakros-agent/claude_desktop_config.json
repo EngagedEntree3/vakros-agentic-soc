@@ -1,0 +1,17 @@
+{
+  "_comment": "Add this block to ~/Library/Application Support/Claude/claude_desktop_config.json",
+  "mcpServers": {
+    "vakros-soc": {
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "cwd": "/Users/aro/Documents/Claude/Projects/Vakros First Billionaire Camel Firm/vakros-agent",
+      "env": {
+        "SUPABASE_URL": "https://etmshueaqaqxpyzuvkqi.supabase.co",
+        "SUPABASE_SERVICE_KEY": "YOUR_SERVICE_KEY_HERE",
+        "ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_KEY_HERE",
+        "VIRUSTOTAL_API_KEY": "",
+        "ABUSEIPDB_API_KEY": ""
+      }
+    }
+  }
+}

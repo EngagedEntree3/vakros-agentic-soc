@@ -1,0 +1,122 @@
+{
+  "template_type": "credential_audit_checklist",
+  "version": "1.0.0",
+  "description": "Pre-configuration credential audit checklist. Must be completed and signed before any n8n Schedule Trigger is activated. gstack v1 Section 3.1.",
+  "workflow_name": "REPLACE_WITH_WORKFLOW_NAME",
+  "completed_by": "",
+  "completion_date": "",
+  "approved_by_engineering_manager": "",
+  "approved_by_release_manager": "",
+  "checklist": {
+    "step1_inventory": {
+      "title": "Step 1 — Inventory External Connections",
+      "status": "pending",
+      "items": [
+        {
+          "item": "List every external API endpoint this workflow calls",
+          "value": "",
+          "checked": false
+        },
+        {
+          "item": "Confirm each endpoint is in /docs/approved-vendors.md",
+          "value": "",
+          "checked": false
+        },
+        {
+          "item": "Flag any new vendor for security review",
+          "value": "",
+          "checked": false
+        }
+      ]
+    },
+    "step2_credentials": {
+      "title": "Step 2 — Credential Validation",
+      "status": "pending",
+      "items": [
+        {
+          "item": "Credentials stored exclusively in n8n encrypted credential store",
+          "value": "",
+          "checked": false
+        },
+        {
+          "item": "Credentials use least-privilege service account (not personal/admin)",
+          "value": "",
+          "checked": false
+        },
+        {
+          "item": "API key rotation date within policy (90 days)",
+          "last_rotation": "",
+          "checked": false
+        },
+        {
+          "item": "OAuth token reviewed within quarterly window",
+          "last_review": "",
+          "checked": false
+        }
+      ]
+    },
+    "step3_siem_hooks": {
+      "title": "Step 3 — SIEM Hook & Integration Validation",
+      "status": "pending",
+      "applicable": true,
+      "items": [
+        {
+          "item": "Webhook endpoint uses HMAC signature validation or equivalent",
+          "checked": false
+        },
+        {
+          "item": "TLS 1.2+ enforced on webhook endpoint",
+          "checked": false
+        },
+        {
+          "item": "Receiving SIEM has valid, unexpired certificate",
+          "checked": false
+        },
+        {
+          "item": "Hook tested with synthetic non-PII test event",
+          "test_event_id": "",
+          "checked": false
+        },
+        {
+          "item": "Successful hook test logged as pre-activation audit record",
+          "record_id": "",
+          "checked": false
+        }
+      ]
+    },
+    "step4_permissions": {
+      "title": "Step 4 — Scope & Permission Review",
+      "status": "pending",
+      "items": [
+        {
+          "item": "n8n service account has exactly required permissions and no more",
+          "permission_set": "",
+          "checked": false
+        },
+        {
+          "item": "Permission set documented in workflow metadata node",
+          "checked": false
+        }
+      ]
+    },
+    "step5_signoff": {
+      "title": "Step 5 — Sign-Off",
+      "status": "pending",
+      "engineering_manager_approval": {
+        "approved": false,
+        "name": "",
+        "date": "",
+        "signature": ""
+      },
+      "release_manager_approval": {
+        "approved": false,
+        "name": "",
+        "date": "",
+        "signature": ""
+      }
+    }
+  },
+  "notes": "",
+  "stored_in": "n8n-manifests/credential-audits/",
+  "immutable_after": "step5_signoff.complete"
+}

@@ -1,0 +1,27 @@
+# Vakros Agent — Python dependencies
+
+# Core
+anthropic>=0.30.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+
+# Supabase
+supabase>=2.5.0
+
+# Embeddings (pick one)
+voyageai>=0.2.3        # Recommended: Anthropic-endorsed embeddings
+# openai>=1.30.0       # Alternative if using OpenAI embeddings
+
+# Document ingestion
+pypdf>=4.2.0           # PDF parsing
+
+# Dev
+python-dotenv>=1.0.0
+httpx>=0.27.0          # For testing API calls
+
+# MCP server
+mcp>=1.0.0
+
+# Webhook server
+python-multipart>=0.0.9  # For form data parsing (FastAPI)

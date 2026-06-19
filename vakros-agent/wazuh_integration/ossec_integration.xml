@@ -1,0 +1,8 @@
+<!-- Add to /var/ossec/etc/ossec.conf on Wazuh manager, then: systemctl restart wazuh-manager -->
+<integration>
+  <name>custom-vakros</name>
+  <hook_url>http://YOUR_VAKROS_SERVER:8001/webhook/wazuh</hook_url>
+  <api_key>YOUR_WEBHOOK_SECRET</api_key>
+  <level>3</level>
+  <alert_format>json</alert_format>
+</integration>

@@ -1,0 +1,122 @@
+{
+  "name": "Vakros Daily Compliance Drift Audit",
+  "description": "Daily SOC 2 + ISO 27001 drift check at 03:00. Scans codebase, infra state, prompt versions, n8n manifests. gstack v1 Section 2.2.",
+  "release_version": "1.0.0",
+  "approved_by": "Release Manager Agent",
+  "schedule": "0 3 * * *",
+  "environment": "production",
+  "nodes": [
+    {
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 3 * * *" }]
+        }
+      }
+    },
+    {
+      "id": "run-compliance-gate",
+      "name": "Run Compliance Gate Script",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [460, 300],
+      "parameters": {
+        "command": "cd /opt/vakros-agentic-soc && python3 scripts/compliance_gate.py --prompts-dir prompts/ --migrations-dir vakros-agent/ --output /tmp/drift-audit-$(date +%Y-%m-%d).json && cat /tmp/drift-audit-$(date +%Y-%m-%d).json"
+      }
+    },
+    {
+      "id": "parse-results",
+      "name": "Parse Compliance Results",
+      "type": "n8n-nodes-base.code",
+      "position": [680, 300],
+      "parameters": {
+        "jsCode": "const output = $json.stdout || '{}';\ntry {\n  const report = JSON.parse(output);\n  return [{ json: report }];\n} catch(e) {\n  return [{ json: { passed: false, error: 'Failed to parse compliance report', raw: output } }];\n}"
+      }
+    },
+    {
+      "id": "persist-to-supabase",
+      "name": "Persist Audit Evidence to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/rest/v1/compliance_drift_audits",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{$env.SUPABASE_SERVICE_KEY}}" },
+            { "name": "Authorization", "value": "Bearer ={{$env.SUPABASE_SERVICE_KEY}}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"timestamp\": \"{{$now}}\", \"passed\": {{$json.passed}}, \"violation_count\": {{$json.violation_count || 0}}, \"report\": {{JSON.stringify($json)}}}"
+      }
+    },
+    {
+      "id": "check-violations",
+      "name": "Check for Violations",
+      "type": "n8n-nodes-base.if",
+      "position": [1120, 300],
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{$json.violation_count}}", "operation": "larger", "value2": 0 }]
+        }
+      }
+    },
+    {
+      "id": "create-github-issue",
+      "name": "Create GitHub Issue (compliance-violation)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1340, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/EngagedEntree3/vakros-agentic-soc/issues",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer ={{$env.GITHUB_TOKEN}}" },
+            { "name": "Accept", "value": "application/vnd.github.v3+json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"title\": \"🚨 Compliance Drift Detected — {{$now}}\", \"body\": \"Daily compliance audit found {{$json.violation_count}} violation(s).\\n\\nControls affected: {{$json.controls_violated}}\\n\\nSee: audit-evidence/drift-audits/\", \"labels\": [\"compliance-violation\", \"priority:high\"], \"assignees\": []}"
+      }
+    },
+    {
+      "id": "notify-release-manager",
+      "name": "Notify Release Manager (Slack)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1560, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SLACK_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"text\": \"🚨 *Vakros Compliance Drift Alert*\\nViolations: {{$json.violation_count}}\\nResolve within 24 hours per SLA.\\nSee GitHub issue for details.\"}"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Run Compliance Gate Script", "type": "main", "index": 0 }]] },
+    "Run Compliance Gate Script": { "main": [[{ "node": "Parse Compliance Results", "type": "main", "index": 0 }]] },
+    "Parse Compliance Results": { "main": [[{ "node": "Persist Audit Evidence to Supabase", "type": "main", "index": 0 }]] },
+    "Persist Audit Evidence to Supabase": { "main": [[{ "node": "Check for Violations", "type": "main", "index": 0 }]] },
+    "Check for Violations": {
+      "main": [
+        [{ "node": "Create GitHub Issue (compliance-violation)", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Create GitHub Issue (compliance-violation)": { "main": [[{ "node": "Notify Release Manager (Slack)", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": ["compliance", "drift-audit", "gstack-v1", "section-2.2"]
+}

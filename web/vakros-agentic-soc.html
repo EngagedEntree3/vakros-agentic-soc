@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic SOC — VAKROS | Six AI Agents. Zero Analysts.</title>
+<meta name="description" content="VAKROS Agentic SOC: Six autonomous AI agents running your Security Operations Center 24/7 — detecting, containing, and reporting threats with sub-60-second response times.">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vakros.com/agentic-soc">
+<meta property="og:site_name" content="Vakros">
+<meta property="og:title" content="Agentic SOC — Vakros | Six AI Agents. Zero Analysts.">
+<meta property="og:description" content="Six autonomous AI agents running your SOC 24/7 — detecting, containing, and reporting threats with sub-60-second response times.">
+<meta property="og:image" content="https://vakros.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Agentic SOC — Vakros | Six AI Agents. Zero Analysts.">
+<meta name="twitter:description" content="Six autonomous AI agents running your SOC 24/7 — detecting, containing, and reporting threats with sub-60-second response times.">
+<meta name="twitter:image" content="https://vakros.com/og-image.png">
+<!-- GA4 — replace G-XXXXXXXXXX with your Measurement ID -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
+<link rel="stylesheet" href="vakros.css">
+<style>
+.page-hero { padding: 160px 0 100px; position: relative; overflow: hidden; text-align: center; }
+.page-hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(15,76,255,0.2) 0%, transparent 60%), var(--bg); }
+.page-hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%); }
+.page-hero > * { position: relative; z-index: 1; }
+.page-hero h1 { max-width: 800px; margin: 0 auto 20px; }
+.page-hero p { max-width: 580px; margin: 0 auto 40px; font-size: 18px; }
+
+/* Agents grid */
+.agents-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.agent-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; transition: all var(--transition); position: relative; overflow: hidden; }
+.agent-card::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-lg); border: 1px solid transparent; transition: border-color var(--transition); pointer-events: none; }
+.agent-card:hover { box-shadow: 0 0 40px rgba(15,76,255,0.15); }
+.agent-card:hover::after { border-color: rgba(15,76,255,0.3); }
+.agent-number { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-3); text-transform: uppercase; margin-bottom: 16px; }
+.agent-icon { width: 56px; height: 56px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; }
+.agent-card h3 { font-size: 20px; margin-bottom: 10px; }
+.agent-card p { font-size: 14px; line-height: 1.7; margin-bottom: 20px; }
+.agent-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.agent-tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-3); }
+
+/* Metrics bar */
+.metrics-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.metric-cell { background: var(--bg-2); padding: 36px 28px; text-align: center; transition: background var(--transition); }
+.metric-cell:hover { background: var(--bg-3); }
+.metric-val { font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 6px; }
+.metric-label { font-size: 14px; color: var(--text-3); }
+.metric-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+/* Timeline */
+.timeline { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.timeline-row { display: grid; grid-template-columns: 120px 1fr; background: var(--bg-2); transition: background var(--transition); }
+.timeline-row:hover { background: var(--bg-3); }
+.timeline-time { padding: 24px 20px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--text-3); border-right: 1px solid var(--border); display: flex; align-items: center; }
+.timeline-content { padding: 24px 28px; }
+.timeline-content h4 { font-size: 15px; margin-bottom: 4px; }
+.timeline-content p { font-size: 13px; }
+.timeline-badge { display: inline-block; margin-top: 8px; }
+
+/* Why different */
+.why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.check-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.check-list li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; color: var(--text-2); line-height: 1.6; }
+.check-icon { width: 22px; height: 22px; border-radius: 50%; background: var(--teal-glow); border: 1px solid rgba(0,212,170,0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px; color: var(--teal); font-weight: 700; }
+
+@media (max-width: 900px) {
+  .agents-grid { grid-template-columns: 1fr; }
+  .metrics-bar { grid-template-columns: 1fr 1fr; }
+  .why-grid { grid-template-columns: 1fr; }
+  .timeline-row { grid-template-columns: 80px 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-mark">V</div>VAKROS
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html#platform">Platform</a></li>
+    <li><a href="vakros-agentic-soc.html">Agentic SOC</a></li>
+    <li><a href="vakros-grc-compliance.html">GRC &amp; Compliance</a></li>
+    <li><a href="pricing.html">Pricing</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="https://dashboard.vakros.com" class="btn btn-secondary">Client Login</a>
+    <a href="assessment.html" class="btn btn-primary">Free Assessment →</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-bg"></div>
+  <div class="page-hero-grid"></div>
+  <div class="container">
+    <div class="label" style="margin:0 auto 20px;">Pillar 01 — Agentic SOC</div>
+    <h1>Six AI agents. Zero analysts.<br><em style="font-style:normal;background:linear-gradient(135deg,var(--blue-light),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Every threat handled in under 60 seconds.</em></h1>
+    <p>VAKROS operates your entire Security Operations Center autonomously — detecting anomalies, investigating threats, containing incidents, and filing compliance-mapped reports. No shift changes. No alert fatigue. No 2am gaps.</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+      <a href="assessment.html" class="btn btn-primary btn-xl">Get Free Security Assessment →</a>
+      <a href="pricing.html" class="btn btn-secondary btn-xl">View Pricing</a>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS BAR -->
+<section class="section-sm" style="background:var(--bg-2);">
+  <div class="container">
+    <div class="metrics-bar">
+      <div class="metric-cell"><div class="metric-val" style="color:var(--teal)">&lt;60s</div><div class="metric-label">Mean time to action</div><div class="metric-sub">Industry avg: 4+ hours</div></div>
+      <div class="metric-cell"><div class="metric-val" style="color:var(--blue-light)">90%</div><div class="metric-label">Alerts auto-resolved</div><div class="metric-sub">No analyst touch needed</div></div>
+      <div class="metric-cell"><div class="metric-val">1:5k</div><div class="metric-label">Agent-to-endpoint ratio</div><div class="metric-sub">Industry avg: 1:350</div></div>
+      <div class="metric-cell"><div class="metric-val" style="color:var(--teal)">24/7</div><div class="metric-label">Continuous coverage</div><div class="metric-sub">No shift changes, ever</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- THE 6 AGENTS -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="label">The Six Agents</div>
+      <h2>Your autonomous security team</h2>
+      <p>Each agent is purpose-built for its role. Together, they cover every phase of the threat lifecycle — detection, investigation, containment, hunting, compliance, and reporting.</p>
+    </div>
+    <div class="agents-grid">
+      <div class="agent-card">
+        <div class="agent-number">Agent 01</div>
+        <div class="agent-icon" style="background:rgba(15,76,255,0.1);border:1px solid rgba(15,76,255,0.25);">🔍</div>
+        <h3>Threat Agent</h3>
+        <p>Continuously ingests telemetry from cloud environments, endpoints, identity providers, and SaaS apps. Uses behavioral AI to detect anomalies, zero-days, and ransomware indicators that signature-based tools miss.</p>
+        <div class="agent-tags"><span class="agent-tag">Behavioral AI</span><span class="agent-tag">Zero-day detection</span><span class="agent-tag">Real-time</span></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-number">Agent 02</div>
+        <div class="agent-icon" style="background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.2);">⚡</div>
+        <h3>Response Agent</h3>
+        <p>Executes pre-built SOAR playbooks autonomously — isolating endpoints, revoking credentials, preserving forensic chains of custody, and initiating clean-room recovery. Mean time to action: under 60 seconds.</p>
+        <div class="agent-tags"><span class="agent-tag">SOAR playbooks</span><span class="agent-tag">Auto-containment</span><span class="agent-tag">Forensics</span></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-number">Agent 03</div>
+        <div class="agent-icon" style="background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);">🛡️</div>
+        <h3>GRC Agent</h3>
+        <p>Maps every security event to SOC 2, HIPAA, ISO 27001, NIST CSF, and CMMC 2.0 controls in real time. Evidence collected automatically. Compliance posture updated with every action. No manual reconciliation.</p>
+        <div class="agent-tags"><span class="agent-tag">SOC 2</span><span class="agent-tag">HIPAA</span><span class="agent-tag">CMMC 2.0</span><span class="agent-tag">Auto-evidence</span></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-number">Agent 04</div>
+        <div class="agent-icon" style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2);">🔎</div>
+        <h3>Hunt Agent</h3>
+        <p>Proactively sweeps your environment using dark web credential monitoring, IoC feeds, and MITRE ATT&CK-mapped behavioral profiling — targeting lateral movement, supply chain threats, and privileged access abuse before they activate.</p>
+        <div class="agent-tags"><span class="agent-tag">Dark web monitoring</span><span class="agent-tag">MITRE ATT&CK</span><span class="agent-tag">Lateral movement</span></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-number">Agent 05</div>
+        <div class="agent-icon" style="background:rgba(100,220,100,0.08);border:1px solid rgba(100,220,100,0.2);">🔒</div>
+        <h3>Vuln Agent</h3>
+        <p>Continuously scans enrolled devices for unpatched CVEs and misconfigurations — prioritizing by exploitability rather than severity, and auto-remediating what it can without requiring IT involvement.</p>
+        <div class="agent-tags"><span class="agent-tag">CVE scanning</span><span class="agent-tag">Auto-remediation</span><span class="agent-tag">Exploitability scoring</span></div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-number">Agent 06</div>
+        <div class="agent-icon" style="background:rgba(150,100,255,0.08);border:1px solid rgba(150,100,255,0.2);">📊</div>
+        <h3>Report Agent</h3>
+        <p>Generates plain-language executive summaries, technical incident reports, and board-level security posture documents — automatically, after every significant event and on a weekly cadence. No analyst hours required.</p>
+        <div class="agent-tags"><span class="agent-tag">Executive reports</span><span class="agent-tag">Incident summaries</span><span class="agent-tag">Board docs</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INCIDENT TIMELINE -->
+<section class="section" style="background:var(--bg-2);">
+  <div class="container">
+    <div class="section-header">
+      <div class="label">Incident Response in Action</div>
+      <h2>From detection to resolution in under 5 minutes</h2>
+      <p>A real-world ransomware scenario, handled autonomously — while your team sleeps.</p>
+    </div>
+    <div class="timeline">
+      <div class="timeline-row">
+        <div class="timeline-time">T+0:00</div>
+        <div class="timeline-content">
+          <h4>Threat Agent detects anomalous PowerShell execution</h4>
+          <p>Behavioral AI flags lateral movement pattern on WIN-WS-042 — matches ransomware pre-encryption signature in MITRE ATT&CK T1059.001.</p>
+          <span class="badge badge-blue timeline-badge">DETECTED</span>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-time">T+0:12</div>
+        <div class="timeline-content">
+          <h4>Response Agent initiates containment playbook</h4>
+          <p>Endpoint isolated from network. User session suspended. File system snapshot initiated for forensic preservation. Hash collected for threat intel cross-reference.</p>
+          <span class="badge badge-teal timeline-badge">CONTAINED</span>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-time">T+0:48</div>
+        <div class="timeline-content">
+          <h4>Hunt Agent sweeps environment for lateral spread</h4>
+          <p>Scans all 312 endpoints and cloud identities for the same IoC signature. Zero additional compromises found. Dark web check for credential exposure: clean.</p>
+          <span class="badge badge-blue timeline-badge">SWEEP COMPLETE</span>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-time">T+1:30</div>
+        <div class="timeline-content">
+          <h4>GRC Agent maps incident to compliance controls</h4>
+          <p>Incident automatically mapped to SOC 2 CC7.4, CC7.5, and HIPAA §164.312(a)(2)(iv). Audit evidence collected. Compliance posture score updated.</p>
+          <span class="badge badge-teal timeline-badge">COMPLIANCE MAPPED</span>
+        </div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-time">T+4:22</div>
+        <div class="timeline-content">
+          <h4>Report Agent delivers plain-language incident report</h4>
+          <p>Executive summary, technical detail, timeline, impact assessment, and remediation steps — delivered to your Slack and email. Your team reads it Sunday morning.</p>
+          <span class="badge badge-blue timeline-badge">REPORT DELIVERED</span>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:32px;font-size:15px;color:var(--text-2)">
+      Total time from detection to full report: <strong style="color:var(--teal)">4 minutes 22 seconds.</strong><br>
+      <span style="color:var(--text-3);font-size:13px;">Traditional MSSP average: 4+ hours to first response, 48+ hours to full containment.</span>
+    </div>
+  </div>
+</section>
+
+<!-- WHY DIFFERENT -->
+<section class="section" id="why">
+  <div class="container">
+    <div class="why-grid">
+      <div>
+        <div class="label">Why VAKROS is different</div>
+        <h2>Built on agents, not analysts</h2>
+        <p style="margin-top:16px;margin-bottom:32px;font-size:16px;">Traditional MSSPs hire humans to watch dashboards, triage alerts, and open tickets. That model has a fundamental ceiling — humans get tired, miss alerts, and go home at shift end. VAKROS has no ceiling.</p>
+        <ul class="check-list">
+          <li><span class="check-icon">✓</span><span>No alert fatigue — agents process every event, no queue, no prioritization errors</span></li>
+          <li><span class="check-icon">✓</span><span>No shift changes — coverage is identical at 2pm Tuesday and 3am Saturday</span></li>
+          <li><span class="check-icon">✓</span><span>No onboarding lag — new assets automatically enrolled and monitored</span></li>
+          <li><span class="check-icon">✓</span><span>No compliance gap — every action documented in real time, not reconstructed before an audit</span></li>
+          <li><span class="check-icon">✓</span><span>No per-incident billing — fixed monthly cost regardless of threat volume</span></li>
+        </ul>
+        <a href="assessment.html" class="btn btn-primary btn-lg" style="margin-top:32px;">Get Free Security Assessment →</a>
+      </div>
+      <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:24px;">Industry comparison</div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:var(--text-2)">Mean time to detect</span><span style="color:var(--teal);font-weight:700;">&lt;60s vs 197 days avg</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:99%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:var(--text-2)">Alert auto-resolution</span><span style="color:var(--teal);font-weight:700;">90% vs 12% industry avg</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:var(--text-2)">Cost vs in-house SOC</span><span style="color:var(--teal);font-weight:700;">60% savings</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:var(--text-2)">Compliance coverage</span><span style="color:var(--teal);font-weight:700;">5 frameworks simultaneously</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:95%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" style="background:var(--bg-2);text-align:center;position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 50% 50%, rgba(15,76,255,0.08) 0%, transparent 70%);"></div>
+  <div class="container" style="position:relative;z-index:1;">
+    <div class="label" style="margin:0 auto 20px;">Start today</div>
+    <h2>Your SOC activates in under 2 hours</h2>
+    <p style="margin-top:16px;margin-bottom:36px;font-size:18px;max-width:520px;margin-left:auto;margin-right:auto;">Free security assessment — we audit your posture before the call. 30 minutes, no pitch, real signal.</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+      <a href="assessment.html" class="btn btn-primary btn-xl">Get Free Assessment →</a>
+      <a href="pricing.html" class="btn btn-secondary btn-xl">View Pricing</a>
+    </div>
+    <div style="margin-top:24px;font-size:13px;color:var(--text-3);display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+      <span style="color:var(--teal)">✓</span><span>No lock-in</span>
+      <span style="color:var(--teal)">✓</span><span>30-day guarantee</span>
+      <span style="color:var(--teal)">✓</span><span>Zero FTEs required</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <a href="index.html" class="nav-logo" style="margin-bottom:16px;display:inline-flex;text-decoration:none;"><div class="nav-logo-mark">V</div>VAKROS</a>
+        <p style="font-size:14px;line-height:1.7;max-width:280px;color:var(--text-3);">The next-generation automation-first MSSP combining Agentic SOC and integrated GRC.</p>
+      </div>
+      <div class="footer-col"><h5>Platform</h5><a href="index.html#platform">24/7 SOC Monitoring</a><a href="index.html#platform">Threat Hunting</a><a href="index.html#platform">Compliance Automation</a><a href="index.html#platform">vCISO Advisory</a></div>
+      <div class="footer-col"><h5>Company</h5><a href="vakros-agentic-soc.html">Agentic SOC</a><a href="vakros-grc-compliance.html">GRC & Compliance</a><a href="pricing.html">Pricing</a><a href="index.html#faq">FAQ</a></div>
+      <div class="footer-col"><h5>Contact</h5><a href="assessment.html">Book a Consultation</a><a href="assessment.html">Free Assessment</a><a href="mailto:info@vakros.com">info@vakros.com</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 VAKROS · Enterprise Security for SMB Budgets</span>
+      <div style="display:flex;gap:20px;"><a href="privacy.html" style="color:var(--text-3);text-decoration:none;">Privacy Policy</a><a href="terms.html" style="color:var(--text-3);text-decoration:none;">Terms of Service</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll', () => {
+  document.querySelector('nav').style.background = window.scrollY > 20 ? 'rgba(7,7,26,0.97)' : 'rgba(7,7,26,0.85)';
+});
+</script>
+</body>
+</html>

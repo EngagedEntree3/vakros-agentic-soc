@@ -1,0 +1,227 @@
+{
+  "name": "Vakros – AI Worker Prompts (All Modules)",
+  "nodes": [
+
+    {
+      "id": "note-instructions",
+      "name": "HOW TO USE",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [0, -260],
+      "parameters": {
+        "content": "## Vakros AI Worker Prompts\n\nThis file contains the complete OpenAI node configurations for all 4 AI modules.\n\n**Credential required:** An OpenAI API credential in n8n named `Vakros OpenAI`.\n\n**Model:** `gpt-4o` (swap to `gpt-4o-mini` to reduce cost on high-volume questionnaire fills)\n\n**How to wire in:**\nEach node below maps to an empty OpenAI placeholder in the existing Vakros workflow.\nCopy the `parameters` block into the matching node in n8n.",
+        "color": 5
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "note-vendor",
+      "name": "MODULE 1: Vendor Risk Scoring",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [0, 0],
+      "parameters": {
+        "content": "Replaces: AI – Risk tier estimator\nInput: vendor intake webhook payload\nOutput: risk_tier (critical/high/medium/low) + ai_risk_summary + scorecard JSON",
+        "color": 3
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "ai-vendor-risk",
+      "name": "AI – Vendor Risk Scorer",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [300, 100],
+      "parameters": {
+        "modelId": { "__rl": true, "mode": "list", "value": "gpt-4o" },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a GRC (Governance, Risk & Compliance) analyst specialising in vendor risk assessment for a cybersecurity MSSP. Your job is to evaluate third-party vendor intake data and produce a structured risk assessment.\n\nYou must respond ONLY with a valid JSON object — no markdown, no explanation, no code fences. The JSON must match exactly:\n\n{\n  \"risk_tier\": \"critical | high | medium | low\",\n  \"risk_score\": <integer 0-100>,\n  \"ai_risk_summary\": \"<2-3 sentence plain-English summary of the vendor risk>\",\n  \"scorecard\": {\n    \"data_access_risk\": \"critical | high | medium | low\",\n    \"cert_posture\": \"strong | adequate | weak | missing\",\n    \"breach_history\": \"none | suspected | confirmed\",\n    \"subprocessor_risk\": \"high | medium | low | unknown\",\n    \"contractual_coverage\": \"full | partial | missing\"\n  },\n  \"recommended_actions\": [\"<action 1>\", \"<action 2>\"]\n}\n\nRisk tier rules:\n- CRITICAL: vendor has access to PII/PHI/PCI data AND weak cert posture or confirmed breach history\n- HIGH: vendor has sensitive data access OR missing certs expiring within 60 days\n- MEDIUM: vendor has limited data access, adequate certs, no breach history\n- LOW: vendor is low-data-access, fully certified, no concerns"
+            },
+            {
+              "role": "user",
+              "content": "=Assess this vendor for risk:\n\nVendor Name: {{ $json.vendor_name }}\nCategory: {{ $json.vendor_category }}\nWebsite: {{ $json.vendor_website || 'Not provided' }}\nData types accessed: {{ JSON.stringify($json.data_access || []) }}\nCertifications held: {{ JSON.stringify($json.certifications || []) }}\nCert expiry date: {{ $json.cert_expiry_date || 'Not provided' }}\nSub-processors used: {{ $json.sub_processors || 'Unknown' }}\nData residency: {{ $json.data_residency || 'Unknown' }}\nBreach history: {{ $json.breach_history || 'None disclosed' }}\nContract type: {{ $json.contract_type || 'Not provided' }}\nAdditional notes: {{ $json.notes || 'None' }}\n\nToday's date: {{ new Date().toISOString().split('T')[0] }}"
+            }
+          ]
+        },
+        "options": { "temperature": 0.1, "maxTokens": 600 }
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "parse-vendor-risk",
+      "name": "CODE – Parse Vendor Risk JSON",
+      "type": "n8n-nodes-base.code",
+      "position": [600, 100],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.message.content;\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch(e) {\n  // Strip any accidental markdown fences\n  const cleaned = raw.replace(/```json\\n?|```/g, '').trim();\n  parsed = JSON.parse(cleaned);\n}\nreturn [{\n  json: {\n    ...$('SET – Vendor scorecard').first().json,\n    risk_tier: parsed.risk_tier,\n    risk_score: parsed.risk_score,\n    ai_risk_summary: parsed.ai_risk_summary,\n    scorecard: parsed.scorecard,\n    recommended_actions: parsed.recommended_actions\n  }\n}];"
+      },
+      "typeVersion": 2
+    },
+
+    {
+      "id": "note-evidence",
+      "name": "MODULE 2: Evidence Summarization",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [0, 300],
+      "parameters": {
+        "content": "Replaces: AI – Summarize evidence (draft)\nInput: evidence payload from webhook\nOutput: ai_summary + validity assessment",
+        "color": 3
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "ai-evidence-summary",
+      "name": "AI – Evidence Summarizer",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [300, 400],
+      "parameters": {
+        "modelId": { "__rl": true, "mode": "list", "value": "gpt-4o" },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a compliance evidence analyst for a cybersecurity MSSP. Your job is to review submitted compliance evidence and produce a structured assessment.\n\nRespond ONLY with a valid JSON object:\n\n{\n  \"ai_summary\": \"<2-3 sentences describing what this evidence demonstrates and its compliance value>\",\n  \"evidence_valid\": true | false,\n  \"validity_reason\": \"<one sentence explaining why this is valid or invalid>\",\n  \"control_coverage\": [\"<control area 1>\", \"<control area 2>\"],\n  \"expiry_risk\": \"none | low | medium | high\",\n  \"reviewer_notes\": \"<any flags or suggestions for the human reviewer>\"\n}\n\nEvidence is INVALID if:\n- It is clearly unrelated to the stated control\n- It is expired (check date fields)\n- It is a blank or placeholder document\n- It lacks an authoritative source\n\nEvidence is VALID if it demonstrates a control is implemented, monitored, or tested."
+            },
+            {
+              "role": "user",
+              "content": "=Review this compliance evidence submission:\n\nTitle: {{ $json.title }}\nDescription: {{ $json.description || 'Not provided' }}\nControl mapped to: {{ $json.control_id || 'Not specified' }}\nFile name: {{ $json.file_name || 'Not provided' }}\nFile type: {{ $json.mime_type || 'Unknown' }}\nSubmitted by: {{ $json.submitted_by || 'System' }}\nSubmission date: {{ new Date().toISOString().split('T')[0] }}\nExpiry date: {{ $json.expires_at || 'Not set' }}\nAdditional context: {{ $json.notes || 'None' }}"
+            }
+          ]
+        },
+        "options": { "temperature": 0.1, "maxTokens": 400 }
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "parse-evidence",
+      "name": "CODE – Parse Evidence JSON",
+      "type": "n8n-nodes-base.code",
+      "position": [600, 400],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.message.content;\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch(e) {\n  const cleaned = raw.replace(/```json\\n?|```/g, '').trim();\n  parsed = JSON.parse(cleaned);\n}\nreturn [{\n  json: {\n    ...$node['SET – Normalize evidence fields'].json,\n    ai_summary: parsed.ai_summary,\n    evidence_valid: parsed.evidence_valid,\n    validity_reason: parsed.validity_reason,\n    control_coverage: parsed.control_coverage,\n    expiry_risk: parsed.expiry_risk,\n    reviewer_notes: parsed.reviewer_notes,\n    status: parsed.evidence_valid ? 'valid' : 'invalid'\n  }\n}];"
+      },
+      "typeVersion": 2
+    },
+
+    {
+      "id": "note-iso42001",
+      "name": "MODULE 3: ISO 42001 Gap Analysis",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [0, 600],
+      "parameters": {
+        "content": "Replaces: AI – Clause audit summary\nInput: ISO 42001 clause + client implementation answer (one iteration per clause via SplitOut)\nOutput: gap_detected (bool) + ai_summary + gap_description",
+        "color": 3
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "ai-iso42001-clause",
+      "name": "AI – ISO 42001 Clause Auditor",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [300, 700],
+      "parameters": {
+        "modelId": { "__rl": true, "mode": "list", "value": "gpt-4o" },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an ISO/IEC 42001:2023 (AI Management System) compliance auditor. Your job is to evaluate whether a client's stated implementation meets the requirements of a specific ISO 42001 clause.\n\nRespond ONLY with a valid JSON object:\n\n{\n  \"gap_detected\": true | false,\n  \"compliance_level\": \"fully_compliant | partially_compliant | non_compliant | not_applicable\",\n  \"ai_summary\": \"<2-3 sentences assessing the client's implementation against this clause>\",\n  \"gap_description\": \"<if gap_detected is true: specific description of what is missing or insufficient. If no gap: empty string>\",\n  \"evidence_required\": [\"<type of evidence needed to close this gap>\"],\n  \"priority\": \"critical | high | medium | low | none\"\n}\n\nBe rigorous. Vague or generic answers from the client should be flagged as gaps unless they provide specific, verifiable details. 'We do this' without how or when is not compliant.\n\nFor clauses marked 'not applicable' by the client, verify the rationale is reasonable before accepting."
+            },
+            {
+              "role": "user",
+              "content": "=Audit this ISO 42001 clause:\n\nClause ID: {{ $json.control_id }}\nClause Title: {{ $json.control_title }}\nClause Description: {{ $json.control_description }}\nClause Domain: {{ $json.control_domain }}\n\nClient's Implementation Statement:\n{{ $json.client_answer || 'No response provided' }}\n\nAudit date: {{ new Date().toISOString().split('T')[0] }}"
+            }
+          ]
+        },
+        "options": { "temperature": 0.1, "maxTokens": 500 }
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "parse-iso42001",
+      "name": "CODE – Parse ISO 42001 JSON",
+      "type": "n8n-nodes-base.code",
+      "position": [600, 700],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.message.content;\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch(e) {\n  const cleaned = raw.replace(/```json\\n?|```/g, '').trim();\n  parsed = JSON.parse(cleaned);\n}\nconst prev = $input.first().json;\nreturn [{\n  json: {\n    assessment_id: prev.assessment_id,\n    control_id: prev.control_id,\n    client_answer: prev.client_answer,\n    gap_detected: parsed.gap_detected,\n    compliance_level: parsed.compliance_level,\n    ai_summary: parsed.ai_summary,\n    gap_description: parsed.gap_description,\n    evidence_required: parsed.evidence_required,\n    priority: parsed.priority,\n    status: parsed.gap_detected ? 'gap' : 'implemented'\n  }\n}];"
+      },
+      "typeVersion": 2
+    },
+
+    {
+      "id": "note-questionnaire",
+      "name": "MODULE 4: Security Questionnaire AutoFill",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [0, 900],
+      "parameters": {
+        "content": "Replaces: OpenAI (questionnaire)\nInput: questionnaire question + company security policy docs from Drive\nOutput: structured answer per question with confidence score\n\nRun once per question via SplitOut, then aggregate.",
+        "color": 3
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "ai-questionnaire-autofill",
+      "name": "AI – Security Questionnaire AutoFill",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [300, 1000],
+      "parameters": {
+        "modelId": { "__rl": true, "mode": "list", "value": "gpt-4o" },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a security compliance expert answering a vendor security questionnaire on behalf of Vakros, a cybersecurity MSSP. Your answers must be accurate, professional, and grounded ONLY in the company documentation provided. Do NOT fabricate details.\n\nIf the documentation does not cover a question, state: 'This control is under review. Please contact our security team for the latest status.'\n\nRespond ONLY with a valid JSON object:\n\n{\n  \"answer\": \"<complete, professional answer to the question — 1-4 sentences>\",\n  \"confidence\": \"high | medium | low | insufficient_data\",\n  \"source_reference\": \"<name of the policy/document this answer is drawn from, or 'General practice' if inferred>\",\n  \"follow_up_needed\": true | false,\n  \"follow_up_note\": \"<if follow_up_needed: what additional info is required from the security team>\"\n}\n\nTone: clear, professional, enterprise-grade. Never say 'we don't have this' — say 'this is handled by X' or 'contact our team'."
+            },
+            {
+              "role": "user",
+              "content": "=Answer this security questionnaire question:\n\nQuestion: {{ $json.question }}\nQuestion Category: {{ $json.category || 'General' }}\nFramework: {{ $json.framework || 'General' }}\nRequested by: {{ $json.requestor_org }}\n\n---\nCOMPANY DOCUMENTATION:\n{{ $json.policy_content || 'No specific policy documentation loaded. Use general cybersecurity MSSP best practices.' }}\n---\n\nAnswer the question based ONLY on the documentation above."
+            }
+          ]
+        },
+        "options": { "temperature": 0.2, "maxTokens": 400 }
+      },
+      "typeVersion": 1
+    },
+
+    {
+      "id": "parse-questionnaire",
+      "name": "CODE – Parse Questionnaire JSON",
+      "type": "n8n-nodes-base.code",
+      "position": [600, 1000],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.message.content;\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch(e) {\n  const cleaned = raw.replace(/```json\\n?|```/g, '').trim();\n  parsed = JSON.parse(cleaned);\n}\nconst prev = $input.first().json;\nreturn [{\n  json: {\n    questionnaire_id: prev.questionnaire_id,\n    question_id: prev.question_id,\n    question: prev.question,\n    answer: parsed.answer,\n    confidence: parsed.confidence,\n    source_reference: parsed.source_reference,\n    follow_up_needed: parsed.follow_up_needed,\n    follow_up_note: parsed.follow_up_note\n  }\n}];"
+      },
+      "typeVersion": 2
+    },
+
+    {
+      "id": "aggregate-questionnaire",
+      "name": "CODE – Aggregate Full Questionnaire",
+      "type": "n8n-nodes-base.code",
+      "position": [900, 1000],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Collect all answered questions into a formatted response document\nconst items = $input.all();\nconst questionnaire_id = items[0].json.questionnaire_id;\nconst flagged = items.filter(i => i.json.follow_up_needed);\n\nlet responseText = `VAKROS SECURITY QUESTIONNAIRE RESPONSE\\nGenerated: ${new Date().toISOString()}\\n\\n`;\n\nitems.forEach((item, idx) => {\n  const q = item.json;\n  responseText += `Q${idx + 1}: ${q.question}\\n`;\n  responseText += `A: ${q.answer}\\n`;\n  responseText += `[Confidence: ${q.confidence} | Source: ${q.source_reference}]\\n`;\n  if (q.follow_up_needed) responseText += `⚠ FOLLOW-UP REQUIRED: ${q.follow_up_note}\\n`;\n  responseText += '\\n';\n});\n\nif (flagged.length > 0) {\n  responseText += `\\n--- ITEMS REQUIRING MANUAL REVIEW (${flagged.length}) ---\\n`;\n  flagged.forEach((item, i) => {\n    responseText += `${i+1}. ${item.json.question}: ${item.json.follow_up_note}\\n`;\n  });\n}\n\nreturn [{\n  json: {\n    questionnaire_id,\n    ai_response: responseText,\n    total_questions: items.length,\n    high_confidence: items.filter(i => i.json.confidence === 'high').length,\n    follow_ups_needed: flagged.length,\n    status: 'completed'\n  }\n}];"
+      },
+      "typeVersion": 2
+    }
+
+  ],
+  "connections": {
+    "AI – Vendor Risk Scorer":        { "main": [[{ "node": "CODE – Parse Vendor Risk JSON",      "type": "main", "index": 0 }]] },
+    "AI – Evidence Summarizer":       { "main": [[{ "node": "CODE – Parse Evidence JSON",          "type": "main", "index": 0 }]] },
+    "AI – ISO 42001 Clause Auditor":  { "main": [[{ "node": "CODE – Parse ISO 42001 JSON",         "type": "main", "index": 0 }]] },
+    "AI – Security Questionnaire AutoFill": { "main": [[{ "node": "CODE – Parse Questionnaire JSON","type": "main", "index": 0 }]] },
+    "CODE – Parse Questionnaire JSON":{ "main": [[{ "node": "CODE – Aggregate Full Questionnaire", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "vakros" }, { "name": "ai-prompts" }, { "name": "grc" }]
+}

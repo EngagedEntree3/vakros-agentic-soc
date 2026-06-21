@@ -65,7 +65,7 @@ cat prompts/soc1-triage-agent.md | head -5
 ### Step 7 — Validate rollback
 ```bash
 python3 scripts/prompt_regression_runner.py --validate-only --prompts-dir prompts/
-python3 scripts/compliance_gate.py --prompts-dir prompts/ --migrations-dir vakros-agent/
+python3 scripts/compliance_gate.py --prompts-dir prompts/ --migrations-dir vakros-soc/agent/
 ```
 Both must pass before declaring rollback complete.
 
